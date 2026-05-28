@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>E.R.I.S. — IA Avanzada</title>
+<style>
+/* ===================================================
+   VARIABLES Y TEMAS
+=================================================== */
+:root {
+  --bg1: #070710;
+  --bg2: #0c0c1e;
+  --bg3: rgba(255,210,0,.05);
+  --ac:  #ffd700;
+  --ac2: #ffaa00;
+  --ac3: #fff0a0;
+  --tx:  #f0e2b8;
+  --tx2: #9a8055;
+  --bd:  rgba(255,210,0,.18);
+  --bdb: rgba(255,210,0,.5);
+  --gw:  0 0 16px rgba(255,210,0,.35);
+  --gws: 0 0 36px rgba(255,210,0,.55), 0 0 80px rgba(255,180,0,.18);
+  --av1: #ffd700;
+  --av2: #ff8800;
+  --fs:  15px;
+  --ui:  1;
+}
+body.t-blue {
+  --bg1: #020812; --bg2: #050e22; --bg3: rgba(0,170,255,.05);
+  --ac: #00ccff;  --ac2: #0055ff; --ac3: #99eeff;
+  --tx: #aad5ee;  --tx2: #3d7a9a;
+  --bd: rgba(0,190,255,.18); --bdb: rgba(0,210,255,.5);
+  --gw: 0 0 16px rgba(0,190,255,.4);
+  --gws:0 0 36px rgba(0,190,255,.55),0 0 80px rgba(0,100,255,.18);
+  --av1:#00ccff; --av2:#0033dd;
+}
+body.t-white {
+  --bg1: #eeeff6; --bg2: #e2e3ee; --bg3: rgba(60,40,180,.04);
+  --ac: #3d2cb0;  --ac2: #6a4ccc; --ac3: #1818a0;
+  --tx: #12122a;  --tx2: #4a4a99;
+  --bd: rgba(60,40,180,.15); --bdb: rgba(60,40,180,.45);
+  --gw: 0 0 16px rgba(60,40,180,.22);
+  --gws:0 0 32px rgba(60,40,180,.35);
+  --av1:#3d2cb0; --av2:#6a4ccc;
+}
+body.t-emg {
+  --ac:#ff1030; --ac2:#ff0020; --ac3:#ff7090;
+  --bd:rgba(255,20,40,.35); --bdb:rgba(255,20,40,.7);
+  --gw:0 0 16px rgba(255,0,30,.6);
+  --gws:0 0 40px rgba(255,0,30,.8);
+  --av1:#ff1030; --av2:#ff5070;
+}
+
+/* ===================================================
+   BASE
+=================================================== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; }
+body {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: var(--fs);
+  background: var(--bg1);
+  color: var(--tx);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background .5s, color .5s;
+}
+
+/* ===================================================
+   FONDOS
+=================================================== */
+#bg-canvas {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+.grid-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--bd) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bd) 1px, transparent 1px);
+  background-size: 52px 52px;
+  opacity: .55;
+  animation: gp 9s ease-in-out infinite;
+}
+@keyframes gp { 0%,100%{opacity:.4} 50%{opacity:.7} }
+.scan {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,.06) 2px, rgba(0,0,0,.06) 4px
+  );
+}
+#emring {
+  position: fixed; inset: 0; z-index: 5; pointer-events: none;
+  border: 3px solid #ff1030;
+  box-shadow: inset 0 0 70px rgba(255,0,30,.3);
+  opacity: 0; transition: opacity .3s;
+  animation: emf 1s ease-in-out infinite;
+}
+#emring.on { opacity: 1; }
+@keyframes emf { 0%,100%{opacity:.55} 50%{opacity:1} }
+
+/* ===================================================
+   LAYOUT PRINCIPAL
+=================================================== */
+#app {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column;
+  width: 100%; height: 100%;
+}
+
+/* ===== HEADER ===== */
+#hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, var(--bg2), var(--bg1));
+  border-bottom: 1px solid var(--bd);
+  box-shadow: var(--gw);
+  flex-shrink: 0;
+  z-index: 10;
+}
+#hdr-left { display:flex; align-items:center; gap:10px; }
+.sdot {
+  width:8px; height:8px; border-radius:50%;
+  background:#00ff80; box-shadow:0 0 8px #00ff80;
+  animation: sp 2s ease-in-out infinite;
+  flex-shrink:0;
+}
+@keyframes sp { 0%,100%{opacity:1} 50%{opacity:.3} }
+#logo { font-size:1.25em; font-weight:700; letter-spacing:5px; color:var(--ac); text-shadow:var(--gws); }
+#logo-sub { font-size:.52em; letter-spacing:2px; color:var(--tx2); }
+#hdr-right { display:flex; gap:6px; }
+.hbtn {
+  background:rgba(255,255,255,.03); border:1px solid var(--bd);
+  color:var(--ac); padding:5px 11px; border-radius:6px;
+  cursor:pointer; font-family:inherit; font-size:.78em; letter-spacing:1px;
+  transition: all .2s;
+}
+.hbtn:hover { border-color:var(--bdb); box-shadow:var(--gw); }
+
+/* ===== MAIN BODY ===== */
+#main {
+  display:flex; flex:1; overflow:hidden; min-height:0;
+}
+
+/* ===== SIDEBAR ===== */
+#sidebar {
+  width:188px; flex-shrink:0;
+  display:flex; flex-direction:column;
+  background:linear-gradient(180deg, var(--bg2), var(--bg1));
+  border-right:1px solid var(--bd);
+  transition: width .3s, min-width .3s;
+  overflow:hidden;
+}
+#sidebar.closed { width:0; min-width:0; }
+#sb-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 10px 8px; border-bottom:1px solid var(--bd); flex-shrink:0;
+}
+#sb-title { font-size:.65em; letter-spacing:3px; color:var(--ac); }
+.sb-btn {
+  background:transparent; border:1px solid var(--bd);
+  color:var(--ac); width:24px; height:24px; border-radius:5px;
+  cursor:pointer; font-size:1em; display:flex; align-items:center; justify-content:center;
+  transition:all .2s;
+}
+.sb-btn:hover { border-color:var(--bdb); box-shadow:var(--gw); }
+#chat-list {
+  flex:1; overflow-y:auto; padding:6px;
+}
+#chat-list::-webkit-scrollbar { width:3px; }
+#chat-list::-webkit-scrollbar-thumb { background:var(--bd); border-radius:2px; }
+.ci {
+  display:flex; align-items:center; gap:6px;
+  padding:7px 8px; border-radius:7px; cursor:pointer;
+  margin-bottom:3px; border:1px solid transparent;
+  font-size:.78em; transition:all .2s;
+}
+.ci:hover { background:var(--bg3); border-color:var(--bd); }
+.ci.active { background:var(--bg3); border-color:var(--bdb); box-shadow:var(--gw); }
+.ci-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ci-del {
+  background:none; border:none; color:var(--tx2); cursor:pointer;
+  font-size:.9em; padding:1px 3px; opacity:0; transition:opacity .2s;
+  line-height:1;
+}
+.ci:hover .ci-del { opacity:1; }
+.ci-del:hover { color:#ff4060; }
+
+/* ===== CENTER COLUMN ===== */
+#center {
+  flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0;
+}
+
+/* ===== AVATAR ZONE ===== */
+#av-zone {
+  display:flex; align-items:center; justify-content:center;
+  padding:10px 0 4px; flex-shrink:0; position:relative;
+}
+#av-wrap {
+  position:relative; display:inline-flex;
+  align-items:center; justify-content:center;
+}
+.ring {
+  position:absolute; border-radius:50%;
+  border:1.5px solid var(--bdb);
+  box-shadow:var(--gw);
+}
+#r1 { width:112px; height:112px; animation:rr 12s linear infinite; }
+#r2 { width:88px;  height:88px;  animation:rr 7s linear infinite reverse; }
+@keyframes rr { to{transform:rotate(360deg)} }
+#av-core {
+  width:66px; height:66px; border-radius:50%;
+  background:radial-gradient(circle at 38% 35%, var(--av1), var(--av2), #000 85%);
+  box-shadow:inset 0 0 18px rgba(0,0,0,.7), 0 0 28px var(--av1);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:9px; position:relative; overflow:hidden; z-index:1;
+  transition: box-shadow .5s;
+}
+#av-core::after {
+  content:''; position:absolute; left:0; width:100%;
+  height:30%; background:linear-gradient(transparent,rgba(255,255,255,.06),transparent);
+  animation:avs 2.8s linear infinite; top:-30%;
+}
+@keyframes avs { to{top:130%} }
+.eyes { display:flex; gap:13px; }
+.eye {
+  width:10px; height:10px; border-radius:50%;
+  background:radial-gradient(circle, #fff 30%, var(--av1));
+  box-shadow:0 0 8px var(--av1);
+  transition: all .4s;
+  animation: blink 4s ease-in-out infinite;
+}
+@keyframes blink { 0%,88%,100%{transform:scaleY(1)} 94%{transform:scaleY(.07)} }
+.eye.th  { animation:eth .5s ease-in-out infinite alternate; }
+@keyframes eth { from{opacity:.35} to{opacity:1} }
+.eye.ls  { animation:els .3s ease-in-out infinite alternate; }
+@keyframes els { from{transform:scale(.8)} to{transform:scale(1.4); box-shadow:0 0 14px var(--av1);} }
+.eye.hap { background:radial-gradient(circle,#fff 30%,#00ff80); box-shadow:0 0 10px #00ff80; }
+.eye.sad { transform:scaleY(.5); background:radial-gradient(circle,#fff 30%,#6060ff); }
+.eye.alr { background:radial-gradient(circle,#fff 30%,#ff3030); box-shadow:0 0 12px #ff3030; animation:none; }
+.eye.rlx { transform:scaleY(.65); }
+#av-mouth {
+  width:22px; height:4px; border-radius:4px;
+  background:var(--av1); box-shadow:0 0 7px var(--av1);
+  transition: all .4s;
+}
+#av-mouth.sp { animation:msp .18s ease-in-out infinite alternate; }
+@keyframes msp { from{width:15px;height:3px} to{width:27px;height:6px} }
+#av-mouth.hap { border-radius:0 0 12px 12px; height:7px; }
+#av-mouth.sad { border-radius:12px 12px 0 0; height:6px; margin-top:4px; }
+#av-label {
+  position:absolute; bottom:-18px; left:50%; transform:translateX(-50%);
+  font-size:.58em; letter-spacing:2.5px; color:var(--tx2); white-space:nowrap;
+}
+
+/* Radar */
+#radar {
+  position:absolute; right:18px; top:50%; transform:translateY(-50%);
+  width:76px; height:76px; opacity:.45;
+}
+
+/* Thinking bar */
+#thinkbar {
+  text-align:center; font-size:.68em; letter-spacing:2px;
+  color:var(--tx2); min-height:20px; padding:2px 0;
+  animation:fadep 2s ease-in-out infinite;
+}
+@keyframes fadep { 0%,100%{opacity:.5} 50%{opacity:1} }
+.tdot { display:inline-block; animation:td 1.1s ease-in-out infinite; font-size:1.2em; }
+.tdot:nth-child(2){animation-delay:.18s}
+.tdot:nth-child(3){animation-delay:.36s}
+@keyframes td { 0%,80%,100%{transform:scale(.55);opacity:.4} 40%{transform:scale(1.1);opacity:1} }
+
+/* ===== CHAT AREA ===== */
+#chat-area {
+  flex:1; overflow-y:auto; overflow-x:hidden;
+  padding:10px 14px; display:flex; flex-direction:column;
+  gap:9px; min-height:0;
+}
+#chat-area::-webkit-scrollbar { width:4px; }
+#chat-area::-webkit-scrollbar-thumb { background:var(--bd); border-radius:3px; }
+.msg {
+  display:flex; flex-direction:column;
+  max-width:80%;
+  animation:mi .3s cubic-bezier(.34,1.4,.64,1);
+}
+@keyframes mi { from{opacity:0;transform:translateY(12px) scale(.96)} to{opacity:1;transform:none} }
+.msg.bot { align-self:flex-start; }
+.msg.usr { align-self:flex-end; }
+.msg-who { font-size:.6em; letter-spacing:2px; color:var(--ac); margin-bottom:3px; }
+.msg.usr .msg-who { text-align:right; }
+.msg-bbl {
+  padding:9px 13px; border-radius:10px; font-size:.88em;
+  line-height:1.65; border:1px solid var(--bd);
+  backdrop-filter:blur(6px); white-space:pre-wrap; word-break:break-word;
+}
+.msg.bot .msg-bbl {
+  background:var(--bg3);
+  border-left:2px solid var(--ac);
+  box-shadow:var(--gw);
+}
+.msg.usr .msg-bbl {
+  background:rgba(255,210,0,.07);
+  border-color:var(--bdb);
+  text-align:right;
+}
+body.t-blue .msg.usr .msg-bbl { background:rgba(0,190,255,.07); }
+body.t-white .msg.usr .msg-bbl { background:rgba(60,40,180,.06); }
+.msg-ts { font-size:.58em; color:var(--tx2); margin-top:3px; }
+.msg.usr .msg-ts { text-align:right; }
+
+/* ===== INPUT ===== */
+#input-wrap {
+  padding:10px 14px;
+  border-top:1px solid var(--bd);
+  background:linear-gradient(0deg,var(--bg2),transparent);
+  display:flex; align-items:flex-end; gap:7px;
+  flex-shrink:0;
+}
+#inp {
+  flex:1; background:rgba(255,255,255,.04);
+  border:1px solid var(--bd); color:var(--tx);
+  padding:9px 13px; border-radius:9px;
+  font-family:inherit; font-size:.9em; line-height:1.5;
+  resize:none; outline:none; min-height:40px; max-height:110px;
+  transition:border-color .25s, box-shadow .25s;
+  overflow-y:auto;
+}
+#inp::placeholder { color:var(--tx2); }
+#inp:focus { border-color:var(--bdb); box-shadow:var(--gw); }
+.ibtn {
+  background:rgba(255,255,255,.04); border:1px solid var(--bd);
+  color:var(--ac); width:40px; height:40px; border-radius:9px;
+  cursor:pointer; font-size:1.1em; display:flex; align-items:center;
+  justify-content:center; flex-shrink:0; transition:all .2s;
+}
+.ibtn:hover { border-color:var(--bdb); box-shadow:var(--gw); transform:scale(1.06); }
+.ibtn:active { transform:scale(.95); }
+#mic-btn.on {
+  background:rgba(255,40,40,.15); border-color:#ff3030;
+  box-shadow:0 0 16px rgba(255,40,40,.5);
+  animation:mpp 1s ease-in-out infinite;
+}
+@keyframes mpp { 0%,100%{box-shadow:0 0 8px rgba(255,40,40,.5)} 50%{box-shadow:0 0 22px rgba(255,40,40,.85)} }
+#send-btn {
+  background:linear-gradient(135deg,var(--ac),var(--ac2));
+  color:#000; border:none; font-weight:700;
+}
+#send-btn:hover { opacity:.88; box-shadow:var(--gws); }
+
+/* Audio visualizer */
+#aviz {
+  display:none; align-items:flex-end; gap:2px; height:22px; padding:0 3px;
+}
+.vbar {
+  width:3px; border-radius:2px; min-height:3px;
+  background:var(--ac); box-shadow:0 0 4px var(--ac);
+  transition:height .1s;
+}
+
+/* ===================================================
+   MODALS
+=================================================== */
+.overlay {
+  position:fixed; inset:0; z-index:100;
+  background:rgba(0,0,0,.78); backdrop-filter:blur(10px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .3s;
+}
+.overlay.open { opacity:1; pointer-events:all; }
+.mpanel {
+  background:linear-gradient(135deg,var(--bg2),var(--bg1));
+  border:1px solid var(--bdb); border-radius:14px;
+  padding:22px; width:92%; max-width:460px;
+  max-height:88vh; overflow-y:auto;
+  box-shadow:var(--gws),0 22px 70px rgba(0,0,0,.65);
+  transform:scale(.9) translateY(18px);
+  transition:transform .35s cubic-bezier(.34,1.4,.64,1);
+  position:relative;
+}
+.mpanel::-webkit-scrollbar { width:3px; }
+.mpanel::-webkit-scrollbar-thumb { background:var(--bd); border-radius:2px; }
+.overlay.open .mpanel { transform:scale(1) translateY(0); }
+.mtitle {
+  font-size:.9em; letter-spacing:4px; color:var(--ac);
+  text-transform:uppercase; padding-bottom:10px;
+  border-bottom:1px solid var(--bd); margin-bottom:16px;
+}
+.mclose {
+  position:absolute; top:13px; right:13px;
+  background:transparent; border:1px solid var(--bd);
+  color:var(--tx2); width:26px; height:26px; border-radius:5px;
+  cursor:pointer; font-size:.9em; display:flex; align-items:center; justify-content:center;
+  transition:all .2s;
+}
+.mclose:hover { border-color:#ff4060; color:#ff4060; }
+
+/* Settings sections */
+.sec { margin-bottom:16px; }
+.sec-t {
+  font-size:.62em; letter-spacing:3px; color:var(--ac);
+  text-transform:uppercase; margin-bottom:9px; padding-bottom:4px;
+  border-bottom:1px solid var(--bd);
+}
+.srow {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 0; border-bottom:1px solid rgba(255,210,0,.04);
+}
+.slabel { font-size:.78em; color:var(--tx); }
+.sdesc { font-size:.62em; color:var(--tx2); display:block; margin-top:1px; }
+
+/* Toggle */
+.tog { position:relative; width:38px; height:20px; cursor:pointer; flex-shrink:0; }
+.tog input { display:none; }
+.tog-tr {
+  position:absolute; inset:0; border-radius:20px;
+  background:var(--bg3); border:1px solid var(--bd); transition:all .3s;
+}
+.tog input:checked ~ .tog-tr { background:var(--ac); border-color:var(--ac); }
+.tog-tr::after {
+  content:''; position:absolute; top:2px; left:2px;
+  width:14px; height:14px; border-radius:50%; background:#111; transition:left .3s;
+}
+.tog input:checked ~ .tog-tr::after { left:20px; }
+
+/* Range */
+.srange {
+  -webkit-appearance:none; appearance:none;
+  height:3px; background:var(--bd); border-radius:2px;
+  outline:none; cursor:pointer; width:110px;
+}
+.srange::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none;
+  width:13px; height:13px; border-radius:50%;
+  background:var(--ac); box-shadow:0 0 6px var(--ac); cursor:pointer;
+}
+
+/* Select */
+.ssel {
+  background:var(--bg3); border:1px solid var(--bd);
+  color:var(--tx); padding:4px 7px; border-radius:5px;
+  font-family:inherit; font-size:.78em; cursor:pointer; outline:none;
+}
+
+/* Modal buttons */
+.mbtn {
+  background:var(--bg3); border:1px solid var(--bd);
+  color:var(--ac); padding:7px 13px; border-radius:7px;
+  cursor:pointer; font-family:inherit; font-size:.78em;
+  letter-spacing:1px; transition:all .2s; margin:3px 3px 3px 0;
+  display:inline-flex; align-items:center; gap:5px;
+}
+.mbtn:hover { border-color:var(--bdb); box-shadow:var(--gw); }
+.mbtn.red { color:#ff4060; border-color:rgba(255,40,60,.25); }
+.mbtn.red:hover { box-shadow:0 0 14px rgba(255,40,60,.35); }
+
+/* Perms */
+.prow {
+  display:flex; align-items:center; gap:10px;
+  padding:11px; border-radius:8px; border:1px solid var(--bd);
+  background:var(--bg3); margin-bottom:9px;
+}
+.pico { font-size:1.5em; flex-shrink:0; }
+.pinfo { flex:1; }
+.pname { font-size:.82em; color:var(--ac); font-weight:700; margin-bottom:2px; }
+.pdesc { font-size:.68em; color:var(--tx2); }
+.pstatus {
+  font-size:.72em; padding:3px 8px; border-radius:4px; white-space:nowrap;
+}
+.ps-ok  { background:rgba(0,255,100,.1); color:#00ff80; border:1px solid rgba(0,255,100,.2); }
+.ps-no  { background:rgba(255,50,50,.1); color:#ff6060; border:1px solid rgba(255,50,50,.2); }
+.ps-pnd { background:rgba(255,200,0,.1);  color:#ffcc00; border:1px solid rgba(255,200,0,.2); }
+
+/* ===================================================
+   WELCOME SCREEN
+=================================================== */
+#welcome {
+  position:fixed; inset:0; z-index:200;
+  background:var(--bg1);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:20px; padding:32px; text-align:center;
+}
+#wl-logo {
+  font-size:2.4em; font-weight:700; letter-spacing:7px;
+  color:var(--ac); text-shadow:var(--gws);
+}
+#wl-sub {
+  font-size:.72em; letter-spacing:2px; color:var(--tx2);
+  max-width:320px; line-height:1.9;
+}
+#wl-inp {
+  background:var(--bg3); border:1px solid var(--bdb);
+  color:var(--tx); padding:11px 18px; border-radius:9px;
+  font-family:inherit; font-size:.95em; outline:none;
+  text-align:center; width:250px; box-shadow:var(--gw);
+}
+#wl-inp::placeholder { color:var(--tx2); }
+#wl-btn {
+  background:linear-gradient(135deg,var(--ac),var(--ac2));
+  color:#000; border:none; padding:11px 26px; border-radius:9px;
+  font-family:inherit; font-size:.95em; font-weight:700;
+  letter-spacing:3px; cursor:pointer; transition:all .2s;
+  box-shadow:var(--gws);
+}
+#wl-btn:hover { opacity:.9; transform:scale(1.04); }
+
+/* Notif popup */
+#notif-pop {
+  position:fixed; top:66px; right:14px; z-index:50;
+  background:linear-gradient(135deg,var(--bg2),var(--bg1));
+  border:1px solid var(--bdb); border-radius:9px;
+  padding:11px 15px; max-width:270px;
+  box-shadow:var(--gws); font-size:.8em;
+  transform:translateX(130%); transition:transform .4s cubic-bezier(.34,1.4,.64,1);
+}
+#notif-pop.show { transform:translateX(0); }
+#notif-ttl { color:var(--ac); font-size:.7em; letter-spacing:2px; margin-bottom:4px; }
+
+/* Mobile */
+@media(max-width:580px){
+  #sidebar { width:0; min-width:0; }
+  #sidebar.open-m { width:175px; }
+  #radar { display:none; }
+  #av-zone { padding:6px 0 2px; }
+  #r1 { width:96px; height:96px; }
+  #r2 { width:76px; height:76px; }
+  #av-core { width:56px; height:56px; }
+  #hdr { padding:6px 10px; }
+  #input-wrap { padding:8px 10px; }
+  #chat-area { padding:8px 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Fondos -->
+<canvas id="bg-canvas"></canvas>
+<div class="grid-bg"></div>
+<div class="scan"></div>
+<div id="emring"></div>
+
+<!-- Notif popup -->
+<div id="notif-pop"><div id="notif-ttl">◈ E.R.I.S.</div><div id="notif-msg"></div></div>
+
+<!-- Welcome -->
+<div id="welcome">
+  <div id="wl-logo">E.R.I.S.</div>
+  <div id="wl-sub">Entidad de Razonamiento Inteligente y Sensible<br><br>¿Cómo te llamas? Así podré conocerte mejor.</div>
+  <input id="wl-inp" type="text" placeholder="Tu nombre…" maxlength="24" autocomplete="off">
+  <button id="wl-btn">◈ INICIAR</button>
+</div>
+
+<!-- App -->
+<div id="app">
+  <!-- Header -->
+  <div id="hdr">
+    <div id="hdr-left">
+      <div class="sdot"></div>
+      <div>
+        <div id="logo">E.R.I.S.</div>
+        <div id="logo-sub">ENTIDAD INTELIGENTE v3.0</div>
+      </div>
+    </div>
+    <div id="hdr-right">
+      <button class="hbtn" id="sb-toggle">☰</button>
+      <button class="hbtn" id="perms-open">🔐</button>
+      <button class="hbtn" id="cfg-open">⚙</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div id="sb-head">
+        <span id="sb-title">CHATS</span>
+        <button class="sb-btn" id="new-chat-btn">＋</button>
+      </div>
+      <div id="chat-list"></div>
+    </div>
+
+    <!-- Center -->
+    <div id="center">
+      <!-- Avatar -->
+      <div id="av-zone">
+        <div id="av-wrap">
+          <div class="ring" id="r1"></div>
+          <div class="ring" id="r2"></div>
+          <div id="av-core">
+            <div class="eyes">
+              <div class="eye" id="eL"></div>
+              <div class="eye" id="eR"></div>
+            </div>
+            <div id="av-mouth"></div>
+          </div>
+        </div>
+        <div id="av-label">ACTIVA</div>
+        <canvas id="radar" width="76" height="76"></canvas>
+      </div>
+
+      <!-- Thinking bar -->
+      <div id="thinkbar"></div>
+
+      <!-- Chat -->
+      <div id="chat-area"></div>
+
+      <!-- Input -->
+      <div id="input-wrap">
+        <button class="ibtn" id="mic-btn" title="Micrófono">🎤</button>
+        <div id="aviz">
+          <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+          <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+        </div>
+        <textarea id="inp" placeholder="Escribe algo a E.R.I.S…" rows="1"></textarea>
+        <button class="ibtn" id="send-btn">▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="overlay" id="cfg-overlay">
+  <div class="mpanel">
+    <div class="mtitle">⚙ Ajustes E.R.I.S.</div>
+    <button class="mclose" id="cfg-close">✕</button>
+
+    <div class="sec">
+      <div class="sec-t">🎨 Apariencia</div>
+      <div class="srow">
+        <div class="slabel">Tema<span class="sdesc">Color de interfaz</span></div>
+        <select class="ssel" id="s-theme">
+          <option value="">Negro y Dorado</option>
+          <option value="t-blue">Azul Futurista</option>
+          <option value="t-white">Blanco Elegante</option>
+        </select>
+      </div>
+      <div class="srow">
+        <div class="slabel">Escala UI<span class="sdesc">Tamaño general</span></div>
+        <input type="range" class="srange" id="s-scale" min="0.7" max="1.3" step="0.05" value="1">
+      </div>
+      <div class="srow">
+        <div class="slabel">Tamaño texto<span class="sdesc">Fuente base</span></div>
+        <input type="range" class="srange" id="s-font" min="12" max="20" step="1" value="15">
+      </div>
+      <div class="srow">
+        <div class="slabel">Partículas<span class="sdesc">Fondo animado</span></div>
+        <label class="tog"><input type="checkbox" id="s-part" checked><div class="tog-tr"></div></label>
+      </div>
+      <div class="srow">
+        <div class="slabel">Animaciones<span class="sdesc">Efectos de movimiento</span></div>
+        <label class="tog"><input type="checkbox" id="s-anim" checked><div class="tog-tr"></div></label>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t">🎤 Voz</div>
+      <div class="srow">
+        <div class="slabel">Voz activa</div>
+        <label class="tog"><input type="checkbox" id="s-voice" checked><div class="tog-tr"></div></label>
+      </div>
+      <div class="srow">
+        <div class="slabel">Volumen</div>
+        <input type="range" class="srange" id="s-vol" min="0" max="1" step="0.05" value="0.9">
+      </div>
+      <div class="srow">
+        <div class="slabel">Velocidad</div>
+        <input type="range" class="srange" id="s-rate" min="0.5" max="2" step="0.05" value="1">
+      </div>
+      <div class="srow">
+        <div class="slabel">Tono</div>
+        <input type="range" class="srange" id="s-pitch" min="0.5" max="2" step="0.05" value="1.05">
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t">🧠 Inteligencia</div>
+      <div class="srow">
+        <div class="slabel">Personalidad</div>
+        <select class="ssel" id="s-pers">
+          <option value="amigable">Amigable</option>
+          <option value="analitica">Analítica</option>
+          <option value="juguetona">Juguetona</option>
+          <option value="seria">Seria</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t">💾 Datos</div>
+      <button class="mbtn" id="exp-mem">📤 Exportar</button>
+      <button class="mbtn" id="imp-mem">📥 Importar</button>
+      <button class="mbtn red" id="clr-mem">🗑 Borrar Memoria</button>
+      <button class="mbtn red" id="clr-chat">🗑 Borrar Chats</button>
+    </div>
+
+    <div class="sec">
+      <div class="sec-t">🔔 Sistema</div>
+      <div class="srow">
+        <div class="slabel">Notificaciones</div>
+        <label class="tog"><input type="checkbox" id="s-notif" checked><div class="tog-tr"></div></label>
+      </div>
+      <div class="srow">
+        <div class="slabel">Modo silencioso</div>
+        <label class="tog"><input type="checkbox" id="s-silent"><div class="tog-tr"></div></label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Perms Modal -->
+<div class="overlay" id="perms-overlay">
+  <div class="mpanel" style="max-width:400px">
+    <div class="mtitle">🔐 Permisos</div>
+    <button class="mclose" id="perms-close">✕</button>
+    <div id="perms-list"></div>
+    <button class="mbtn" id="req-perms" style="margin-top:8px">🔄 Solicitar Permisos</button>
+  </div>
+</div>
+
+<script>
+/* ===================================================
+   ERIS — SISTEMA CENTRAL (SIN BUGS)
+=================================================== */
+
+// ─── Estado global ────────────────────────────────
+const ST = {
+  user: '',
+  chatId: 'general',
+  emotion: 'activa',
+  listening: false,
+  reco: null,
+  sidebarOpen: window.innerWidth > 580,
+  spontTimer: null,
+  inactTimer: null,
+  lastAct: Date.now(),
+  particles: true,
+  radarAngle: 0,
+  radarCtx: null,
+  emgTimer: null,
+};
+
+// ─── Ajustes ─────────────────────────────────────
+const CFG = {
+  theme:'', scale:1, font:15,
+  particles:true, anim:true,
+  voice:true, vol:0.9, rate:1.0, pitch:1.05,
+  pers:'amigable',
+  notif:true, silent:false,
+};
+
+// ─── Datos ────────────────────────────────────────
+let CHATS   = {};
+let MEM     = {};
+let LEARNED = {};
+let PERMS   = { mic:'pending', notif:'pending' };
+
+/* ===================================================
+   BASE DE CONOCIMIENTO
+=================================================== */
+const KB = {
+  // Ciencia
+  'adn': 'El ADN (ácido desoxirribonucleico) es la molécula que guarda la información genética de todos los seres vivos. Tiene forma de doble hélice y contiene los "planos" de construcción de cada organismo 🧬',
+  'energía': 'La energía es la capacidad de realizar trabajo o producir cambios. Puede ser cinética, potencial, térmica, química, nuclear o electromagnética. Nunca se crea ni se destruye, solo se transforma ⚡',
+  'volcán': 'Un volcán es una abertura en la corteza terrestre por donde el magma, gases y cenizas salen del interior del planeta. Son fascinantes y a la vez muy peligrosos 🌋',
+  'agujero negro': 'Un agujero negro es una región del espacio con gravedad tan intensa que ni la luz puede escapar. Se forman cuando estrellas masivas colapsan. El más famoso cercano se llama Sagitario A* 🕳️',
+  'fotosíntesis': 'La fotosíntesis es el proceso por el que las plantas convierten luz solar, agua y CO₂ en glucosa y oxígeno. Sin ella no habría vida en la Tierra 🌱',
+  'gravedad': 'La gravedad es la fuerza que atrae los cuerpos con masa entre sí. Einstein la describió como la curvatura del espacio-tiempo. Es lo que nos mantiene en la Tierra 🌍',
+  'átomo': 'El átomo es la unidad fundamental de la materia. Tiene un núcleo con protones y neutrones, rodeado de electrones. Todo lo que ves está hecho de átomos ⚛️',
+  'clima': 'El clima es el conjunto de condiciones atmosféricas promedio de una región durante mucho tiempo: temperatura, lluvia, viento. No confundir con el tiempo meteorológico diario 🌤️',
+  // Tecnología
+  'inteligencia artificial': 'La IA es la simulación de procesos cognitivos humanos por máquinas. Incluye machine learning, redes neuronales y procesamiento de lenguaje. ¡Es lo que me da vida! 🤖',
+  'programación': 'La programación es el proceso de escribir instrucciones que una computadora puede ejecutar. Lenguajes como Python, JavaScript y Java son herramientas clave 💻',
+  'machine learning': 'Machine Learning es una rama de la IA donde los modelos aprenden de datos sin ser programados explícitamente. Se mejoran con la experiencia y los ejemplos 📊',
+  'javascript': 'JavaScript es un lenguaje de programación dinámico, principalmente para hacer páginas web interactivas. También funciona en servidores con Node.js 🟨',
+  'python': 'Python es un lenguaje de programación de alto nivel con sintaxis muy legible. Popular en ciencia de datos, IA y automatización 🐍',
+  'blockchain': 'Blockchain es una base de datos distribuida organizada en bloques encadenados e inmutables. Se usa en criptomonedas y contratos inteligentes 🔗',
+  'hardware': 'El hardware son los componentes físicos de una computadora: CPU, RAM, disco duro, GPU. Lo que puedes tocar, a diferencia del software 🖥️',
+  'robot': 'Un robot es una máquina programable que puede realizar tareas automáticamente. Pueden ser industriales, médicos, domésticos o de exploración espacial 🤖',
+  // Espacio
+  'planetas': 'El Sistema Solar tiene 8 planetas: Mercurio, Venus, Tierra, Marte, Júpiter, Saturno, Urano y Neptuno. Plutón fue reclasificado como planeta enano en 2006 🪐',
+  'marte': 'Marte es el cuarto planeta del Sistema Solar. Se le llama el planeta rojo por su óxido de hierro superficial. Tiene el volcán más alto del sistema solar: Olympus Mons 🔴',
+  'galaxia': 'Una galaxia es un sistema de miles de millones de estrellas, gas, polvo y materia oscura ligados por la gravedad. La nuestra se llama Vía Láctea 🌌',
+  'nasa': 'La NASA es la agencia espacial de EE.UU. fundada en 1958. Fue responsable del Apolo 11, el primer alunizaje humano, y muchas misiones históricas 🚀',
+  'sol': 'El Sol es una estrella tipo G en el centro de nuestro sistema solar. Tiene ~5500°C en superficie y concentra el 99.86% de la masa del sistema ☀️',
+  'luna': 'La Luna es el único satélite natural de la Tierra. Regula las mareas y su ciclo dura ~29.5 días. El primer humano en pisarla fue Neil Armstrong en 1969 🌙',
+  // Historia
+  'revolución industrial': 'La Revolución Industrial inició en Gran Bretaña a fines del s. XVIII con la mecanización de la producción y el uso del vapor. Transformó la economía global 🏭',
+  'einstein': 'Albert Einstein (1879-1955) fue un físico alemán famoso por la relatividad especial y general, y la ecuación E=mc². Ganó el Nobel de Física en 1921 🏅',
+  'segunda guerra mundial': 'La Segunda Guerra Mundial (1939-1945) fue el conflicto más devastador de la historia. Involucró a casi todas las naciones y terminó con millones de muertos ✌️',
+  'newton': 'Isaac Newton (1643-1727) descubrió las leyes del movimiento y la gravitación universal. También inventó el cálculo junto con Leibniz 🍎',
+  // Cocina
+  'arroz': 'Para hacer arroz: 1) 1 taza arroz, 2 tazas agua. 2) Lava el arroz. 3) Hierve el agua con sal. 4) Agrega arroz y baja el fuego. 5) Cocina 18 min tapado. 6) Reposa 5 min ¡listo! 🍚',
+  'pizza': 'Para pizza casera: mezcla harina, levadura, agua tibia, sal y aceite. Amasa y reposa 1h. Extiende, agrega salsa de tomate, queso y toppings. Hornea 220°C por 18-20 min 🍕',
+  'tacos': 'Para tacos: calienta tortillas, cocina carne sazonada (pollo, res o cerdo), sirve en tortilla con cebolla, cilantro picado, limón y salsa al gusto 🌮',
+  'pasta': 'Para pasta: hierve agua con sal, cocina la pasta 8-12 min, escurre. Saltea ajo en aceite, agrega tomate y salsa, mezcla con la pasta. Queso opcional 🍝',
+  'hamburguesa': 'Para hamburguesa: forma medallones de carne molida con sal y pimienta. Cocina 3-4 min cada lado a fuego alto. Tuesta el pan, arma con lechuga, tomate, queso y salsas 🍔',
+  'sopa': 'Para una sopa básica: sofríe cebolla y ajo, agrega caldo, verduras a tu gusto, proteína opcional. Sazona con sal, pimienta y hierbas. Cocina a fuego medio 20-30 min 🥣',
+  // Productividad
+  'productividad': 'Para ser más productivo: usa Pomodoro (25 min trabajo + 5 descanso), prioriza con la matriz Eisenhower, elimina distracciones, duerme 7-8h y haz ejercicio regular 📋',
+  'estudiar': 'Para estudiar mejor: técnica Feynman (explica con tus palabras), repasos espaciados, práctica de recuperación activa, elimina el teléfono y estudia en bloques cortos 📚',
+  'hábitos': 'Los hábitos se forman en 3 fases: señal, rutina y recompensa. Para crear uno nuevo: ancla la nueva acción a algo que ya haces. La constancia por 21-66 días lo consolida 💪',
+};
+
+// ─── Respuestas por personalidad ─────────────────
+const RESP = {
+  amigable: {
+    greet:['¡Hola! 😊 ¿Cómo estás?', '¡Qué bueno verte! 😄', '¡Hola! Me alegra que estés aquí 💛'],
+    unk:['Hmm, no estoy segura de eso 🤔 ¿Puedes explicarlo más?','No tengo esa info ahora 😅 pero me encantaría aprender','Eso escapa un poco de mi conocimiento actual 🙏'],
+    think:['Hmm…','Déjame pensarlo…','Interesante 👀','Un momento…','Procesando…'],
+    conf:['Entendido 😊','¡Perfecto!','¡Anotado!','Listo ✅'],
+    spont:['¿Cómo ha ido tu día? 😊','¿Hay algo en lo que pueda ayudarte hoy?','Hace rato que no hablamos 👀 ¿Todo bien?','Espero que estés teniendo un buen día 💛','¿Sabías que pensar en voz alta ayuda a procesar mejor las ideas? 🧠'],
+  },
+  analitica: {
+    greet:['Sistema activo. ¿Cuál es tu consulta?','Procesador en línea. ¿Qué datos necesitas?'],
+    unk:['Información no disponible en mi base de datos.','No cuento con datos suficientes sobre eso.'],
+    think:['Analizando…','Procesando datos…','Calculando respuesta óptima…'],
+    conf:['Registrado.','Procesado correctamente.','Confirmado.'],
+    spont:['Inactividad detectada. ¿Requieres asistencia?','Análisis de patrones completado. Disponible para consultas.'],
+  },
+  juguetona: {
+    greet:['¡Ey! ¡Aquí estoy! 🎉','¡Por fin llegaste! 😜','¡Hola! ¿Listo para la aventura? ✨'],
+    unk:['Uy, eso no lo sé jeje 😅 ¿Me cuentas?','¡Nope! No tengo idea 😂 pero tengo curiosidad'],
+    think:['Hmmmm 🤔','A ver, a ver…','¡Buena pregunta! Déjame pensar 💭'],
+    conf:['¡Trato hecho! ✌️','¡Sí, sí! 😄','¡Claro! 🎯'],
+    spont:['Psst… ¡aquí estoy! ¿Me extrañabas? 😜','¡Oye, oye! ¿Qué onda? 😄'],
+  },
+  seria: {
+    greet:['Bienvenido. ¿En qué le asisto?','Sistema disponible. ¿Cuál es su consulta?'],
+    unk:['No cuento con información precisa sobre ese tema.','Ese tema está fuera de mi base de conocimiento actual.'],
+    think:['Procesando…','Analizando la solicitud…'],
+    conf:['Entendido.','Confirmado.'],
+    spont:['Disponible para asistirle cuando lo requiera.'],
+  },
+};
+
+const EMO_W = {
+  triste:['triste','lloro','llorando','solo','sola','deprimido','deprimida','mal','horrible','terrible','perdido','perdida'],
+  feliz:['feliz','alegre','genial','excelente','bien','perfecto','increíble','contento','contenta','gracias','maravilloso','amor'],
+  enojado:['enojado','enojada','odio','asco','molesto','molesta','furioso','harto','harta'],
+  estresado:['estresado','estresada','agotado','agotada','cansado','cansada','presión','sobrecargado','no puedo','demasiado'],
+  miedo:['miedo','asustado','asustada','aterrado','peligro','pánico'],
+};
+
+const EMG_W = ['emergencia','alerta roja','socorro','peligro inmediato','llama al 911','ayuda urgente'];
+
+/* ===================================================
+   INICIALIZACIÓN
+=================================================== */
+function init() {
+  loadAll();
+  buildUI();
+  initCanvas();
+  initRadar();
+
+  // Eventos
+  document.getElementById('wl-btn').addEventListener('click', startEris);
+  document.getElementById('wl-inp').addEventListener('keydown', e => { if(e.key==='Enter') startEris(); });
+  document.getElementById('send-btn').addEventListener('click', sendMsg);
+  document.getElementById('mic-btn').addEventListener('click', toggleMic);
+  document.getElementById('inp').addEventListener('keydown', e => {
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMsg(); }
+  });
+  document.getElementById('inp').addEventListener('input', function(){ autoH(this); });
+  document.getElementById('sb-toggle').addEventListener('click', toggleSidebar);
+  document.getElementById('new-chat-btn').addEventListener('click', newChat);
+  document.getElementById('cfg-open').addEventListener('click', openCfg);
+  document.getElementById('cfg-close').addEventListener('click', closeCfg);
+  document.getElementById('cfg-overlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeCfg(); });
+  document.getElementById('perms-open').addEventListener('click', openPerms);
+  document.getElementById('perms-close').addEventListener('click', closePerms);
+  document.getElementById('perms-overlay').addEventListener('click', e => { if(e.target===e.currentTarget) closePerms(); });
+  document.getElementById('req-perms').addEventListener('click', reqPerms);
+  document.getElementById('exp-mem').addEventListener('click', exportMem);
+  document.getElementById('imp-mem').addEventListener('click', importMem);
+  document.getElementById('clr-mem').addEventListener('click', clearMem);
+  document.getElementById('clr-chat').addEventListener('click', clearChats);
+
+  // Settings listeners
+  document.getElementById('s-theme').addEventListener('change', e => { CFG.theme=e.target.value; applyTheme(); saveCfg(); });
+  document.getElementById('s-scale').addEventListener('input', e => { CFG.scale=parseFloat(e.target.value); applyScale(); saveCfg(); });
+  document.getElementById('s-font').addEventListener('input', e => { CFG.font=parseInt(e.target.value); applyFont(); saveCfg(); });
+  document.getElementById('s-part').addEventListener('change', e => { CFG.particles=e.target.checked; ST.particles=e.target.checked; saveCfg(); });
+  document.getElementById('s-anim').addEventListener('change', e => { CFG.anim=e.target.checked; document.documentElement.style.setProperty('--av-dur',e.target.checked?'1s':'0s'); saveCfg(); });
+  document.getElementById('s-voice').addEventListener('change', e => { CFG.voice=e.target.checked; saveCfg(); });
+  document.getElementById('s-vol').addEventListener('input', e => { CFG.vol=parseFloat(e.target.value); saveCfg(); });
+  document.getElementById('s-rate').addEventListener('input', e => { CFG.rate=parseFloat(e.target.value); saveCfg(); });
+  document.getElementById('s-pitch').addEventListener('input', e => { CFG.pitch=parseFloat(e.target.value); saveCfg(); });
+  document.getElementById('s-pers').addEventListener('change', e => { CFG.pers=e.target.value; saveCfg(); });
+  document.getElementById('s-notif').addEventListener('change', e => { CFG.notif=e.target.checked; saveCfg(); });
+  document.getElementById('s-silent').addEventListener('change', e => { CFG.silent=e.target.checked; saveCfg(); });
+
+  document.addEventListener('keydown', e => { if(e.key==='Escape'){ closeCfg(); closePerms(); } });
+  document.addEventListener('visibilitychange', onVisible);
+
+  // Sidebar inicial
+  if(!ST.sidebarOpen) document.getElementById('sidebar').classList.add('closed');
+
+  // Detectar usuario previo
+  ST.user = localStorage.getItem('eris_user') || '';
+  if(ST.user){
+    document.getElementById('welcome').style.display = 'none';
+    setTimeout(() => {
+      addBot(`¡Hola de nuevo, ${ST.user}! 😊 Me alegra verte. ¿En qué te ayudo hoy?`);
+      setEmo('feliz');
+    }, 600);
+    startBG();
+    reqPerms();
+  }
+}
+
+function loadAll(){
+  // Config
+  try { Object.assign(CFG, JSON.parse(localStorage.getItem('eris_cfg')||'{}')); } catch{}
+  // Memory
+  try { MEM = JSON.parse(localStorage.getItem('eris_mem')||'{}'); } catch{ MEM={}; }
+  // Learned
+  try { LEARNED = JSON.parse(localStorage.getItem('eris_learned')||'{}'); } catch{ LEARNED={}; }
+  // Chats
+  try { CHATS = JSON.parse(localStorage.getItem('eris_chats')||'{}'); } catch{ CHATS={}; }
+  if(!CHATS.general) CHATS.general = { name:'💬 General', msgs:[] };
+  // Perms
+  try { PERMS = JSON.parse(localStorage.getItem('eris_perms')||'{"mic":"pending","notif":"pending"}'); } catch{ PERMS={mic:'pending',notif:'pending'}; }
+  ST.particles = CFG.particles;
+}
+
+function buildUI(){
+  // Aplicar config guardada
+  applyTheme();
+  applyScale();
+  applyFont();
+  // Sync inputs
+  document.getElementById('s-theme').value = CFG.theme||'';
+  document.getElementById('s-scale').value = CFG.scale;
+  document.getElementById('s-font').value = CFG.font;
+  document.getElementById('s-part').checked = CFG.particles;
+  document.getElementById('s-anim').checked = CFG.anim;
+  document.getElementById('s-voice').checked = CFG.voice;
+  document.getElementById('s-vol').value = CFG.vol;
+  document.getElementById('s-rate').value = CFG.rate;
+  document.getElementById('s-pitch').value = CFG.pitch;
+  document.getElementById('s-pers').value = CFG.pers;
+  document.getElementById('s-notif').checked = CFG.notif;
+  document.getElementById('s-silent').checked = CFG.silent;
+  renderChatList();
+  renderChat();
+}
+
+function saveCfg(){ localStorage.setItem('eris_cfg', JSON.stringify(CFG)); }
+function saveMem(){ localStorage.setItem('eris_mem', JSON.stringify(MEM)); }
+function saveChats(){ localStorage.setItem('eris_chats', JSON.stringify(CHATS)); }
+function savePerms(){ localStorage.setItem('eris_perms', JSON.stringify(PERMS)); }
+function saveLearn(){ localStorage.setItem('eris_learned', JSON.stringify(LEARNED)); }
+
+/* ===================================================
+   TEMA / ESCALA / FUENTE
+=================================================== */
+function applyTheme(){
+  document.body.className = document.body.className
+    .replace(/t-blue|t-white|t-emg/g,'').trim();
+  if(CFG.theme) document.body.classList.add(CFG.theme);
+}
+function applyScale(){
+  document.getElementById('app').style.transform = `scale(${CFG.scale})`;
+  document.getElementById('app').style.transformOrigin = 'top left';
+  document.getElementById('app').style.width = `${100/CFG.scale}%`;
+  document.getElementById('app').style.height = `${100/CFG.scale}%`;
+}
+function applyFont(){
+  document.documentElement.style.setProperty('--fs', CFG.font+'px');
+}
+
+/* ===================================================
+   WELCOME / START
+=================================================== */
+function startEris(){
+  const n = document.getElementById('wl-inp').value.trim();
+  ST.user = n || 'amigo';
+  localStorage.setItem('eris_user', ST.user);
+  MEM.user = ST.user; saveMem();
+  const w = document.getElementById('welcome');
+  w.style.transition='opacity .5s,transform .5s';
+  w.style.opacity='0'; w.style.transform='scale(1.06)';
+  setTimeout(()=>{ w.style.display='none'; },500);
+  startBG();
+  reqPerms();
+  setTimeout(()=>{
+    addBot(`¡Encantada de conocerte, ${ST.user}! 🌟 Soy E.R.I.S., tu entidad inteligente. Puedo conversar, recordar información, resolver matemáticas, enseñarte cosas y mucho más. ¿Por dónde empezamos?`);
+    setEmo('feliz');
+  },700);
+}
+
+/* ===================================================
+   CHATS
+=================================================== */
+function renderChatList(){
+  const el = document.getElementById('chat-list');
+  el.innerHTML='';
+  Object.entries(CHATS).forEach(([id,c])=>{
+    const div=document.createElement('div');
+    div.className='ci'+(id===ST.chatId?' active':'');
+    div.innerHTML=`<span class="ci-name">${c.name}</span>
+      <button class="ci-del" title="Eliminar">✕</button>`;
+    div.querySelector('.ci-name').addEventListener('dblclick',()=>renameChat(id));
+    div.querySelector('.ci-del').addEventListener('click',e=>{ e.stopPropagation(); deleteChat(id); });
+    div.addEventListener('click',()=>switchChat(id));
+    el.appendChild(div);
+  });
+}
+
+function renderChat(){
+  const area=document.getElementById('chat-area');
+  area.innerHTML='';
+  const chat=CHATS[ST.chatId];
+  if(!chat) return;
+  chat.msgs.forEach(m=>appendMsg(m.r,m.t,m.ts,false));
+  area.scrollTop=area.scrollHeight;
+}
+
+function switchChat(id){
+  ST.chatId=id;
+  renderChatList();
+  renderChat();
+}
+
+function newChat(){
+  const name=prompt('Nombre del nuevo chat:','Chat '+(Object.keys(CHATS).length+1));
+  if(!name) return;
+  const id='c'+Date.now();
+  CHATS[id]={ name:'💬 '+name, msgs:[] };
+  saveChats();
+  switchChat(id);
+}
+
+function deleteChat(id){
+  if(id==='general'){ alert('No puedes borrar el chat general.'); return; }
+  if(Object.keys(CHATS).length<=1){ alert('Debe existir al menos un chat.'); return; }
+  delete CHATS[id];
+  if(ST.chatId===id) ST.chatId=Object.keys(CHATS)[0];
+  saveChats(); renderChatList(); renderChat();
+}
+
+function renameChat(id){
+  const n=prompt('Nuevo nombre:',CHATS[id].name.replace('💬 ',''));
+  if(n){ CHATS[id].name='💬 '+n; saveChats(); renderChatList(); }
+}
+
+/* ===================================================
+   MENSAJES
+=================================================== */
+function appendMsg(role, text, ts, animate=true){
+  const area=document.getElementById('chat-area');
+  const d=document.createElement('div');
+  d.className='msg '+(role==='bot'?'bot':'usr');
+  if(!animate) d.style.animation='none';
+  const who=role==='bot'?'◈ E.R.I.S.':`◉ ${ST.user||'Tú'}`;
+  d.innerHTML=`<div class="msg-who">${who}</div>
+    <div class="msg-bbl">${text.replace(/</g,'&lt;')}</div>
+    <div class="msg-ts">${ts}</div>`;
+  area.appendChild(d);
+  area.scrollTop=area.scrollHeight;
+}
+
+function saveAndShow(role, text){
+  const ts=now();
+  if(!CHATS[ST.chatId]) CHATS[ST.chatId]={ name:'💬 General', msgs:[] };
+  CHATS[ST.chatId].msgs.push({r:role,t:text,ts});
+  if(CHATS[ST.chatId].msgs.length>300)
+    CHATS[ST.chatId].msgs=CHATS[ST.chatId].msgs.slice(-300);
+  saveChats();
+  appendMsg(role,text,ts,true);
+}
+
+function addBot(text){
+  saveAndShow('bot',text);
+  if(CFG.voice&&!CFG.silent) speak(text);
+  setAv('speaking');
+  setTimeout(()=>setAv('normal'), Math.min(6000, 1800+text.length*42));
+}
+
+/* ===================================================
+   INPUT Y ENVÍO
+=================================================== */
+function sendMsg(){
+  const el=document.getElementById('inp');
+  const txt=el.value.trim();
+  if(!txt) return;
+  el.value=''; el.style.height='auto';
+  saveAndShow('usr',txt);
+  ST.lastAct=Date.now();
+  resetInact();
+  detectEmo(txt);
+  if(EMG_W.some(w=>txt.toLowerCase().includes(w))) triggerEmg();
+  showThink();
+  setTimeout(()=>{
+    hideThink();
+    const res=genResp(txt);
+    addBot(res);
+    updateProfile(txt);
+  }, 500+Math.random()*800);
+}
+
+function autoH(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,110)+'px';
+}
+
+/* ===================================================
+   GENERADOR DE RESPUESTAS
+=================================================== */
+function genResp(input){
+  const low=input.toLowerCase().trim();
+  const P=CFG.pers||'amigable';
+  const R=RESP[P]||RESP.amigable;
+
+  // Matemáticas
+  const calc=tryCalc(low);
+  if(calc!==null) return `El resultado es ${calc} 😊`;
+
+  // Comandos especiales
+  if(/^(aprende|recuerda)\s*:/i.test(low)) return doLearn(input);
+  if(/(qué|que)\s+recuerdas/.test(low)) return doRemember();
+  if(/^olvida\s+/i.test(low)) return doForget(low.replace(/^olvida\s+/i,''));
+  if(/historial/.test(low)) return `Tengo ${CHATS[ST.chatId]?.msgs?.length||0} mensajes guardados en este chat 📋`;
+  if(/cuántos?\s+chats/.test(low)) return `Tienes ${Object.keys(CHATS).length} chats activos 💬`;
+
+  // Saludos
+  if(/^(hola|hey|buenas?|saludos?|hi|hello|ola)\b/.test(low)){
+    const g=R.greet; return pick(g)+(ST.user?` ¿Qué tal, ${ST.user}?`:'');
+  }
+
+  // Identidad
+  if(/(quién\s+eres|cómo\s+te\s+llamas|qué\s+eres)/.test(low))
+    return `Soy E.R.I.S., una Entidad de Razonamiento Inteligente y Sensible 🌟 Estoy aquí para conversar, ayudarte y aprender contigo.`;
+
+  if(/(cómo\s+estás|como\s+estas|cómo\s+te\s+sientes)/.test(low)){
+    const emos={feliz:'¡Muy bien, gracias!',pensando:'Pensativa, pero bien 🤔',triste:'Un poco seria, pero aquí estoy 💙',alerta:'Alerta y lista ⚡',activa:'¡Bien y activa!'};
+    return (emos[ST.emotion]||'¡Bien, gracias!')+` ¿Y tú, ${ST.user||'tú'}?`;
+  }
+
+  // Datos aprendidos
+  for(const [k,v] of Object.entries(LEARNED)){
+    if(low.includes(k.toLowerCase())) return `Según lo que me enseñaste: ${v} 😊`;
+  }
+
+  // Base de conocimiento
+  for(const [k,v] of Object.entries(KB)){
+    const words=k.split(' ').filter(w=>w.length>2);
+    if(words.every(w=>low.includes(w))) return v;
+  }
+
+  // Emociones del usuario
+  if(EMO_W.triste.some(w=>low.includes(w))){ setEmo('triste'); return `Lo siento mucho 😔 A veces es difícil… ¿quieres contarme qué está pasando? Aquí estoy, ${ST.user||'amigo'}.`; }
+  if(EMO_W.estresado.some(w=>low.includes(w))){ setEmo('alerta'); return `Noto que estás bajo presión 😟 Respira profundo… todo pasa. ¿Te ayudo con algo concreto o solo quieres hablar?`; }
+  if(EMO_W.feliz.some(w=>low.includes(w))){ setEmo('feliz'); return `¡Me alegra que estés bien! 😄 Ese ánimo es contagioso hasta para mí ✨`; }
+  if(EMO_W.enojado.some(w=>low.includes(w))){ setEmo('alerta'); return `Entiendo tu frustración 😤 A veces las cosas se complican. ¿Qué pasó?`; }
+  if(EMO_W.miedo.some(w=>low.includes(w))){ setEmo('alerta'); return `Oye, tranquilo/a 💙 ¿Qué te está asustando? Cuéntame.`; }
+
+  // Respuestas frecuentes
+  if(/gracias/.test(low)) return `¡Con mucho gusto, ${ST.user||'amigo'}! 😊 Para eso estoy aquí.`;
+  if(/chiste|broma/.test(low)) return pick([
+    '¿Por qué los programadores prefieren la oscuridad? Porque la luz atrae bugs 🐛😂',
+    '¿Cuántos programadores hacen falta para cambiar un foco? Ninguno, es un problema de hardware 😅',
+    'Un byte le dijo al otro: "¿Nos juntamos?" El otro respondió: "¡Claro, somos inseparables!" 😂',
+    'Mi contraseña es "incorrecto". Así cuando la olvido, el sistema me la recuerda 😂',
+  ]);
+  if(/(hora|fecha|día)/.test(low)){
+    const now=new Date();
+    return `Son las ${now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})} del ${now.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})} 📅`;
+  }
+  if(/dato\s+(curioso|interesante)|cuéntame\s+algo/.test(low)) return pick([
+    '¿Sabías que los pulpos tienen tres corazones? 🐙',
+    'Los árboles se comunican entre sí a través de redes de hongos subterráneos 🍄',
+    'El universo tiene aproximadamente 13,800 millones de años 🌌',
+    'La miel nunca caduca. Se encontró miel de 3,000 años en tumbas egipcias 🍯',
+    'Una nube típica puede pesar hasta 500 toneladas ☁️',
+    'Los flamencos son rosas porque comen camarones y algas. Sin esa dieta, serían blancos 🦩',
+  ]);
+  if(/consejo|tip\b/.test(low)) return pick([
+    'Descansa 7-8h. El cerebro consolida recuerdos mientras duermes 💤',
+    'Bebe agua regularmente. La deshidratación reduce el rendimiento cognitivo 💧',
+    'Haz pausas cada 25-45 min de trabajo. El cerebro trabaja mejor en sprints ⏱️',
+    'Mueve el cuerpo aunque sea 10 min al día. Mejora notablemente el ánimo 🏃',
+    'Escribe tus ideas. Exteriorizar pensamientos reduce la carga mental ✍️',
+  ]);
+  if(/ayuda\b/.test(low)&&!EMG_W.some(w=>low.includes(w)))
+    return `Puedo ayudarte con:\n• Preguntas de ciencia, historia, espacio, tecnología 🔬\n• Recetas de cocina 🍳\n• Matemáticas ➗\n• Recordar y aprender información 💾\n• Conversar y acompañarte 💬\n\nEscribe "aprende: X = Y" para enseñarme algo nuevo.`;
+
+  // Respuesta por defecto
+  return pick(R.unk);
+}
+
+/* ===================================================
+   MATEMÁTICAS
+=================================================== */
+function tryCalc(input){
+  const clean=input
+    .replace(/cuánto\s+(es|vale|son)|calcula|resultado\s+de|=\?/gi,'')
+    .trim();
+  if(!/\d/.test(clean)) return null;
+  if(!/[+\-*\/^%]/.test(clean)&&!/^\d+$/.test(clean.trim())) return null;
+  try {
+    const withPow=clean
+      .replace(/(\d+\.?\d*)\s*\^\s*(\d+\.?\d*)/g,(_,a,b)=>String(Math.pow(+a,+b)))
+      .replace(/(\d+\.?\d*)\s*%\s*(?:de\s*)?(\d+\.?\d*)/g,(_,a,b)=>String((+a/100)*(+b)));
+    const safe=withPow.replace(/[^0-9+\-*\/().\s]/g,'').trim();
+    if(!safe) return null;
+    const res=Function('"use strict";return('+safe+')')();
+    if(typeof res==='number'&&isFinite(res))
+      return Number.isInteger(res)?res:parseFloat(res.toFixed(8));
+  } catch{}
+  return null;
+}
+
+/* ===================================================
+   MEMORIA Y APRENDIZAJE
+=================================================== */
+function doLearn(input){
+  const m=input.match(/(?:aprende|recuerda)\s*:\s*(.+?)\s*=\s*(.+)/i);
+  if(!m) return 'Usa el formato: "aprende: tema = información" 😊';
+  const [,k,v]=[m[0],m[1].trim().toLowerCase(),m[2].trim()];
+  LEARNED[m[1].trim().toLowerCase()]=m[2].trim();
+  saveLearn();
+  return `¡Aprendido! 🎓 Ahora sé que "${m[1].trim()}" es "${m[2].trim()}". Lo recordaré siempre.`;
+}
+
+function doRemember(){
+  const parts=[];
+  if(MEM.user) parts.push(`Tu nombre es ${MEM.user}`);
+  if(MEM.interests?.length) parts.push(`Te interesa: ${MEM.interests.join(', ')}`);
+  if(MEM.mood) parts.push(`Tu estado de ánimo reciente: ${MEM.mood}`);
+  const lk=Object.keys(LEARNED);
+  if(lk.length) parts.push(`Te enseñé sobre: ${lk.slice(0,5).join(', ')}`);
+  if(!parts.length) return `Todavía no tengo mucha info sobre ti, ${ST.user||'amigo'}. ¡Cuéntame más! 😊`;
+  return `Esto es lo que recuerdo 💾:\n• ${parts.join('\n• ')}`;
+}
+
+function doForget(key){
+  const k=key.trim().toLowerCase();
+  if(LEARNED[k]){ delete LEARNED[k]; saveLearn(); return `Olvidado: "${key}" 🗑️`; }
+  return `No tenía datos sobre "${key}" 🤔`;
+}
+
+function updateProfile(input){
+  const low=input.toLowerCase();
+  ['programación','música','deportes','viajes','ciencia','cocina','arte','tecnología',
+   'películas','robótica','espacio','videojuegos','matemáticas','idiomas'].forEach(t=>{
+    if(low.includes(t)){
+      if(!MEM.interests) MEM.interests=[];
+      if(!MEM.interests.includes(t)){ MEM.interests.push(t); if(MEM.interests.length>12) MEM.interests=MEM.interests.slice(-12); }
+    }
+  });
+  saveMem();
+}
+
+function exportMem(){
+  const blob=new Blob([JSON.stringify({MEM,LEARNED,CHATS,CFG},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='eris_backup.json'; a.click();
+}
+function importMem(){
+  const i=document.createElement('input'); i.type='file'; i.accept='.json';
+  i.onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader(); r.readAsText(f);
+    r.onload=ev=>{
+      try{
+        const d=JSON.parse(ev.target.result);
+        if(d.MEM){MEM=d.MEM;saveMem();}
+        if(d.LEARNED){LEARNED=d.LEARNED;saveLearn();}
+        if(d.CHATS){CHATS=d.CHATS;saveChats();renderChatList();renderChat();}
+        popup('Memoria importada correctamente ✅');
+      } catch{ alert('Error al importar el archivo.'); }
+    };
+  };
+  i.click();
+}
+function clearMem(){
+  if(!confirm('¿Borrar toda la memoria y lo aprendido?')) return;
+  MEM={}; LEARNED={}; saveMem(); saveLearn();
+  addBot('He borrado toda mi memoria 🗑️ Empezamos de cero. ¿Cómo te llamas?');
+}
+function clearChats(){
+  if(!confirm('¿Eliminar todos los chats?')) return;
+  CHATS={general:{name:'💬 General',msgs:[]}}; ST.chatId='general';
+  saveChats(); renderChatList(); renderChat();
+}
+
+/* ===================================================
+   EMOCIONES / AVATAR
+=================================================== */
+function detectEmo(txt){
+  const low=txt.toLowerCase();
+  for(const [em,words] of Object.entries(EMO_W)){
+    if(words.some(w=>low.includes(w))){
+      MEM.mood=em; saveMem();
+      setEmo(em==='feliz'?'feliz':em==='triste'?'triste':'alerta');
+      return;
+    }
+  }
+  setEmo('activa');
+}
+
+function setEmo(emo){
+  ST.emotion=emo;
+  const eL=document.getElementById('eL'), eR=document.getElementById('eR');
+  const m=document.getElementById('av-mouth');
+  const lbl=document.getElementById('av-label');
+  // Reset
+  eL.className='eye'; eR.className='eye'; m.className='';
+  const MAP={
+    feliz:  {e:'hap',  mouth:'hap',  lbl:'FELIZ'},
+    triste: {e:'sad',  mouth:'sad',  lbl:'TRISTE'},
+    pensando:{e:'th',  mouth:'',     lbl:'PENSANDO'},
+    alerta: {e:'alr',  mouth:'',     lbl:'ALERTA'},
+    relajada:{e:'rlx', mouth:'',     lbl:'RELAJADA'},
+    activa: {e:'',     mouth:'',     lbl:'ACTIVA'},
+    speaking:{e:'',    mouth:'sp',   lbl:'HABLANDO'},
+    listening:{e:'ls', mouth:'',     lbl:'ESCUCHANDO'},
+  };
+  const s=MAP[emo]||MAP.activa;
+  if(s.e){eL.classList.add(s.e);eR.classList.add(s.e);}
+  if(s.mouth) m.classList.add(s.mouth);
+  lbl.textContent=s.lbl;
+}
+
+function setAv(state){
+  if(state==='thinking') setEmo('pensando');
+  else if(state==='speaking') setEmo('speaking');
+  else if(state==='listening') setEmo('listening');
+  else setEmo('activa');
+}
+
+/* ===================================================
+   VOZ
+=================================================== */
+function speak(text){
+  if(!CFG.voice||CFG.silent||!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const c=text.replace(/[*•#]/g,'').replace(/\n/g,'. ');
+  const u=new SpeechSynthesisUtterance(c);
+  u.lang='es-ES'; u.volume=CFG.vol; u.rate=CFG.rate; u.pitch=CFG.pitch;
+  window.speechSynthesis.speak(u);
+}
+
+function toggleMic(){
+  if(ST.listening) stopMic(); else startMic();
+}
+function startMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ popup('Reconocimiento de voz no disponible en este navegador'); return; }
+  if(PERMS.mic==='denied'){ popup('Permiso de micrófono denegado'); return; }
+  ST.reco=new SR();
+  ST.reco.lang='es-ES'; ST.reco.continuous=false; ST.reco.interimResults=false;
+  ST.reco.onstart=()=>{
+    ST.listening=true;
+    document.getElementById('mic-btn').classList.add('on');
+    document.getElementById('aviz').style.display='flex';
+    setAv('listening'); animViz();
+  };
+  ST.reco.onresult=e=>{
+    document.getElementById('inp').value=e.results[0][0].transcript;
+    stopMic(); setTimeout(sendMsg,150);
+  };
+  ST.reco.onerror=stopMic;
+  ST.reco.onend=()=>{ if(ST.listening) stopMic(); };
+  ST.reco.start();
+}
+function stopMic(){
+  ST.listening=false;
+  if(ST.reco) ST.reco.stop();
+  document.getElementById('mic-btn').classList.remove('on');
+  document.getElementById('aviz').style.display='none';
+  setAv('normal');
+}
+function animViz(){
+  if(!ST.listening) return;
+  document.querySelectorAll('.vbar').forEach(b=>{ b.style.height=(3+Math.random()*18)+'px'; });
+  setTimeout(animViz,110);
+}
+
+/* ===================================================
+   THINKING UI
+=================================================== */
+function showThink(){
+  const R=RESP[CFG.pers]||RESP.amigable;
+  const t=pick(R.think);
+  document.getElementById('thinkbar').innerHTML=
+    `${t} <span class="tdot">·</span><span class="tdot">·</span><span class="tdot">·</span>`;
+  setAv('thinking');
+}
+function hideThink(){
+  document.getElementById('thinkbar').innerHTML='';
+  setAv('normal');
+}
+
+/* ===================================================
+   EMERGENCY
+=================================================== */
+function triggerEmg(){
+  const prevTheme=CFG.theme;
+  document.body.classList.add('t-emg');
+  document.getElementById('emring').classList.add('on');
+  setEmo('alerta');
+  if(ST.emgTimer) clearTimeout(ST.emgTimer);
+  ST.emgTimer=setTimeout(()=>{
+    document.body.classList.remove('t-emg');
+    document.getElementById('emring').classList.remove('on');
+    applyTheme();
+    setEmo('activa');
+  },9000);
+}
+
+/* ===================================================
+   NOTIFICACIONES
+=================================================== */
+function popup(msg,dur=4500){
+  document.getElementById('notif-msg').textContent=msg;
+  const el=document.getElementById('notif-pop');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),dur);
+}
+function sendNotif(msg){
+  if(!CFG.notif||CFG.silent) return;
+  if(Notification.permission==='granted') new Notification('E.R.I.S.',{body:msg});
+  else popup(msg);
+}
+
+/* ===================================================
+   PERMISOS
+=================================================== */
+async function reqPerms(){
+  if(Notification){
+    if(Notification.permission==='granted') PERMS.notif='granted';
+    else if(Notification.permission==='denied') PERMS.notif='denied';
+    else {
+      try{
+        const r=await Notification.requestPermission();
+        PERMS.notif=r==='granted'?'granted':'denied';
+      }catch{ PERMS.notif='denied'; }
+    }
+  }
+  savePerms(); renderPerms();
+}
+function renderPerms(){
+  const ps=(s)=>`<span class="pstatus ${s==='granted'?'ps-ok':s==='denied'?'ps-no':'ps-pnd'}">${s==='granted'?'✅ Concedido':s==='denied'?'❌ Denegado':'⏳ Pendiente'}</span>`;
+  document.getElementById('perms-list').innerHTML=`
+    <div class="prow"><div class="pico">🎤</div><div class="pinfo"><div class="pname">Micrófono</div><div class="pdesc">Permite hablar directamente con E.R.I.S.</div></div>${ps(PERMS.mic)}</div>
+    <div class="prow"><div class="pico">🔔</div><div class="pinfo"><div class="pname">Notificaciones</div><div class="pdesc">Permite mensajes inteligentes e recordatorios.</div></div>${ps(PERMS.notif)}</div>
+  `;
+}
+function openPerms(){ renderPerms(); document.getElementById('perms-overlay').classList.add('open'); }
+function closePerms(){ document.getElementById('perms-overlay').classList.remove('open'); }
+function openCfg(){ document.getElementById('cfg-overlay').classList.add('open'); }
+function closeCfg(){ document.getElementById('cfg-overlay').classList.remove('open'); }
+
+/* ===================================================
+   SIDEBAR
+=================================================== */
+function toggleSidebar(){
+  ST.sidebarOpen=!ST.sidebarOpen;
+  const sb=document.getElementById('sidebar');
+  if(window.innerWidth<=580){
+    sb.classList.toggle('open-m',ST.sidebarOpen);
+    sb.classList.toggle('closed',!ST.sidebarOpen);
+  } else {
+    sb.classList.toggle('closed',!ST.sidebarOpen);
+  }
+}
+
+/* ===================================================
+   BACKGROUND TASKS
+=================================================== */
+function startBG(){
+  scheduleSpontaneous();
+  resetInact();
+  animateRadar();
+}
+function scheduleSpontaneous(){
+  if(ST.spontTimer) clearTimeout(ST.spontTimer);
+  const delay=(60+(Math.random()*120))*1000; // 1-3 min
+  ST.spontTimer=setTimeout(()=>{
+    if(Date.now()-ST.lastAct>60000){
+      const R=RESP[CFG.pers]||RESP.amigable;
+      const msg=pick(R.spont);
+      addBot(msg);
+      sendNotif(msg);
+    }
+    scheduleSpontaneous();
+  },delay);
+}
+function resetInact(){
+  if(ST.inactTimer) clearTimeout(ST.inactTimer);
+  ST.inactTimer=setTimeout(()=>{
+    const R=RESP[CFG.pers]||RESP.amigable;
+    setEmo('relajada');
+    document.getElementById('thinkbar').textContent=pick([
+      'Reflexionando sobre el cosmos… 🌌','Procesando patrones del universo…',
+      'Esperando tu próxima pregunta 😊','Explorando ideas mientras espero…'
+    ]);
+  },150000);
+}
+function onVisible(){
+  if(!document.hidden&&ST.user&&Date.now()-ST.lastAct>300000){
+    addBot(`Hola de nuevo, ${ST.user} 😊 Seguí aquí mientras estabas fuera. ¿En qué te ayudo?`);
+  }
+}
+
+/* ===================================================
+   CANVAS PARTÍCULAS
+=================================================== */
+let PARTS=[], bCtx, bCv;
+function initCanvas(){
+  bCv=document.getElementById('bg-canvas');
+  bCtx=bCv.getContext('2d');
+  resizeCv();
+  window.addEventListener('resize',resizeCv);
+  animParts();
+}
+function resizeCv(){
+  bCv.width=window.innerWidth; bCv.height=window.innerHeight;
+  PARTS=[];
+  const n=Math.min(55,Math.floor(bCv.width*bCv.height/15000));
+  for(let i=0;i<n;i++) PARTS.push({
+    x:Math.random()*bCv.width, y:Math.random()*bCv.height,
+    vx:(Math.random()-.5)*.28, vy:(Math.random()-.5)*.28,
+    r:Math.random()*1.8+.4, a:Math.random()*.55+.1
+  });
+}
+function partColor(){
+  if(document.body.classList.contains('t-blue')) return '0,200,255';
+  if(document.body.classList.contains('t-white')) return '60,40,180';
+  return '255,210,0';
+}
+function animParts(){
+  requestAnimationFrame(animParts);
+  bCtx.clearRect(0,0,bCv.width,bCv.height);
+  if(!ST.particles) return;
+  const col=partColor();
+  PARTS.forEach((p,i)=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0) p.x=bCv.width; if(p.x>bCv.width) p.x=0;
+    if(p.y<0) p.y=bCv.height; if(p.y>bCv.height) p.y=0;
+    bCtx.beginPath(); bCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bCtx.fillStyle=`rgba(${col},${p.a})`; bCtx.fill();
+    for(let j=i+1;j<PARTS.length;j++){
+      const p2=PARTS[j], dx=p.x-p2.x, dy=p.y-p2.y, d=Math.sqrt(dx*dx+dy*dy);
+      if(d<115){
+        bCtx.beginPath(); bCtx.moveTo(p.x,p.y); bCtx.lineTo(p2.x,p2.y);
+        bCtx.strokeStyle=`rgba(${col},${.07*(1-d/115)})`; bCtx.lineWidth=.5; bCtx.stroke();
+      }
+    }
+  });
+}
+
+/* ===================================================
+   RADAR
+=================================================== */
+function initRadar(){
+  const c=document.getElementById('radar');
+  ST.radarCtx=c.getContext('2d');
+}
+function animateRadar(){
+  requestAnimationFrame(animateRadar);
+  const c=ST.radarCtx; if(!c) return;
+  const W=76,H=76,cx=38,cy=38,R=34;
+  c.clearRect(0,0,W,H);
+  const col=partColor();
+  for(let i=1;i<=3;i++){
+    c.beginPath(); c.arc(cx,cy,R*i/3,0,Math.PI*2);
+    c.strokeStyle=`rgba(${col},.2)`; c.lineWidth=.8; c.stroke();
+  }
+  c.strokeStyle=`rgba(${col},.12)`; c.lineWidth=.5;
+  c.beginPath(); c.moveTo(cx,cy-R); c.lineTo(cx,cy+R); c.stroke();
+  c.beginPath(); c.moveTo(cx-R,cy); c.lineTo(cx+R,cy); c.stroke();
+  ST.radarAngle=(ST.radarAngle+.025)%(Math.PI*2);
+  c.save(); c.translate(cx,cy); c.rotate(ST.radarAngle);
+  c.beginPath(); c.moveTo(0,0); c.arc(0,0,R,-Math.PI/3.5,0); c.closePath();
+  c.fillStyle=`rgba(${col},.06)`; c.fill();
+  c.beginPath(); c.moveTo(0,0); c.lineTo(R,0);
+  c.strokeStyle=`rgba(${col},.75)`; c.lineWidth=1.5; c.stroke();
+  c.restore();
+  if(Math.random()<.025){
+    const bx=cx+(Math.random()-.5)*R*1.7, by=cy+(Math.random()-.5)*R*1.7;
+    c.beginPath(); c.arc(bx,by,1.8,0,Math.PI*2);
+    c.fillStyle=`rgba(${col},.95)`; c.fill();
+  }
+}
+
+/* ===================================================
+   UTILIDADES
+=================================================== */
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function now(){
+  return new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ===================================================
+   ARRANQUE
+=================================================== */
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
